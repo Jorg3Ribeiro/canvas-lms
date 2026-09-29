@@ -1,0 +1,89 @@
+# Canvas LMS — production stack for VPS
+# Usage:
+#   cp .env.production.example .env.production   # edit secrets
+#   docker compose -f docker-compose.production.yml --env-file .env.production up -d --build
+#
+# Important: do NOT bind-mount the source tree. That causes
+# Bundler::PermissionError on Gemfile.lock (jobs/web). App is baked into the image.
+
+x-app: &APP
+  build:
+    context: .
+    dockerfile: Dockerfile.vps
+    args:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  image: canvas-lms:production
+  restart: unless-stopped
+  env_file:
+    - .env.production
+  environment:
+    RAILS_ENV: production
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    CANVAS_DATABASE_HOST: postgres
+    CANVAS_DATABASE_USERNAME: postgres
+    CANVAS_DATABASE_PRODUCTION: canvas_production
+    # Prevent Bundler from trying to rewrite Gemfile.lock at runtime
+    BUNDLE_FROZEN: "1"
+  volumes:
+    # Persist uploads and logs only — never mount the full source tree
+    - canvas_files:/usr/src/app/tmp/files
+    - canvas_log:/usr/src/app/log
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *APP
+    ports:
+      - "${CANVAS_HTTP_PORT:-80}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/login >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  jobs:
+    <<: *APP
+    command: bundle exec ruby script/delayed_job run
+
+  postgres:
+    build: ./docker-compose/postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Do not expose Postgres publicly on a VPS
+    expose:
+      - "5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    expose:
+      - "6379"
+
+volumes:
+  pg_data:
+  redis_data:
+  canvas_files:
+  canvas_log:

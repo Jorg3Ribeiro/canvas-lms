@@ -112,3 +112,5 @@ coverage-karma
 /.devcontainer/*
 /!.devcontainer/.keep
 .claude/scheduled_tasks.lock
+
+.env.production

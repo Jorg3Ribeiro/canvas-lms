@@ -1,5 +1,8 @@
 # See doc/docker/README.md or https://github.com/instructure/canvas-lms/tree/master/doc/docker
 # Host ports are offset from the local LMS stack (lms-local uses 3000, 5432, 6379).
+#
+# For VPS / production use docker-compose.production.yml instead
+# (see doc/docker/PRODUCTION_VPS.md). Do not bind-mount source in production.
 x-web: &WEB
   build:
     context: .
