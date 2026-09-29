@@ -9,6 +9,19 @@ cd "$ROOT"
 
 COMPOSE=(docker compose -f docker-compose.production.yml --env-file .env.production)
 
+# Safe KEY=VALUE loader (avoids `source` breaking on spaces / special chars)
+load_env_file() {
+  local file="$1" line key value
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    export "${key}=${value}"
+  done < "$file"
+}
+
 if [[ ! -f .env.production ]]; then
   echo "==> Creating .env.production from example"
   cp .env.production.example .env.production
@@ -26,11 +39,7 @@ if [[ ! -f .env.production ]]; then
   echo "==> Wrote secrets into .env.production (keep this file private)"
 fi
 
-# shellcheck disable=SC1091
-set -a
-# shellcheck source=/dev/null
-source .env.production
-set +a
+load_env_file .env.production
 
 if [[ "${POSTGRES_PASSWORD}" == CHANGE_ME* ]] || [[ "${ENCRYPTION_KEY}" == CHANGE_ME* ]]; then
   echo "ERROR: replace CHANGE_ME_* values in .env.production first"
@@ -56,7 +65,7 @@ set +e
 "${COMPOSE[@]}" run --rm \
   -e "CANVAS_LMS_ADMIN_EMAIL=${CANVAS_LMS_ADMIN_EMAIL:-admin@${CANVAS_HOST}}" \
   -e "CANVAS_LMS_ADMIN_PASSWORD=${CANVAS_LMS_ADMIN_PASSWORD}" \
-  -e "CANVAS_LMS_ACCOUNT_NAME=${CANVAS_LMS_ACCOUNT_NAME:-Canvas LMS}" \
+  -e "CANVAS_LMS_ACCOUNT_NAME=${CANVAS_LMS_ACCOUNT_NAME:-Canvas}" \
   -e "CANVAS_LMS_STATS_COLLECTION=${CANVAS_LMS_STATS_COLLECTION:-opt_out}" \
   web bundle exec rake db:initial_setup
 setup_status=$?
