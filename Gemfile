@@ -18,6 +18,10 @@ Plugin.uninstall(["bundler_lockfile_extensions"], {}) if Plugin.installed?("bund
 plugin "bundler-multilock", "1.4.0", path: "#{__dir__}/vendor/gems/bundler-multilock"
 # the extra check here is in case `bundle check` or `bundle exec` gets run before `bundle install`,
 # and is also fixed by the same PR
+return unless Plugin.installed?("bundler-multilock")
+
+Plugin.send(:load_plugin, "bundler-multilock")
+
 raise GemNotFound, "bundler-multilock plugin is not installed" if !is_a?(Bundler::Plugin::DSL) && !Plugin.installed?("bundler-multilock")
 return unless Plugin.installed?("bundler-multilock")
 

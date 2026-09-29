@@ -14,3 +14,6 @@ RUN apt-get update -qq \
 
 COPY /create-dbs.sh /docker-entrypoint-initdb.d/
 COPY /wait-for-it /
+# Windows checkouts keep CR in these scripts; the kernel then cannot find the shebang interpreter.
+RUN sed -i 's/\r$//' /docker-entrypoint-initdb.d/create-dbs.sh /wait-for-it \
+ && chmod +x /docker-entrypoint-initdb.d/create-dbs.sh /wait-for-it
