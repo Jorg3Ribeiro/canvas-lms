@@ -46,8 +46,19 @@ if [[ "${POSTGRES_PASSWORD}" == CHANGE_ME* ]] || [[ "${ENCRYPTION_KEY}" == CHANG
   exit 1
 fi
 
-echo "==> Building production image (this can take a long time)"
-"${COMPOSE[@]}" build
+if [[ ! -f deploy/config/database.yml ]]; then
+  echo "ERROR: deploy/config/database.yml missing."
+  echo "config/*.yml is gitignored; production configs live under deploy/config/."
+  exit 1
+fi
+
+# Rebuild only when image is missing or --rebuild was passed
+if [[ "${1:-}" == "--rebuild" ]] || ! docker image inspect canvas-lms:production >/dev/null 2>&1; then
+  echo "==> Building production image (this can take a long time)"
+  "${COMPOSE[@]}" build
+else
+  echo "==> Reusing existing image canvas-lms:production (pass --rebuild to force)"
+fi
 
 echo "==> Starting postgres + redis"
 "${COMPOSE[@]}" up -d postgres redis
@@ -76,7 +87,7 @@ if [[ $setup_status -ne 0 ]]; then
 fi
 
 echo "==> Starting web + jobs"
-"${COMPOSE[@]}" up -d
+"${COMPOSE[@]}" up -d --force-recreate web jobs
 
 echo
 echo "Canvas should be available at: http://${CANVAS_HOST:-185.252.233.171}"

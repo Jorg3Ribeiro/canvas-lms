@@ -30,6 +30,17 @@ x-app: &APP
     # Persist uploads and logs only — never mount the full source tree
     - canvas_files:/usr/src/app/tmp/files
     - canvas_log:/usr/src/app/log
+    # Tracked configs (config/*.yml is gitignored and missing from git checkouts)
+    - ./deploy/config/database.yml:/usr/src/app/config/database.yml:ro
+    - ./deploy/config/security.yml:/usr/src/app/config/security.yml:ro
+    - ./deploy/config/domain.yml:/usr/src/app/config/domain.yml:ro
+    - ./deploy/config/redis.yml:/usr/src/app/config/redis.yml:ro
+    - ./deploy/config/cache_store.yml:/usr/src/app/config/cache_store.yml:ro
+    - ./deploy/config/outgoing_mail.yml:/usr/src/app/config/outgoing_mail.yml:ro
+    - ./deploy/config/dynamic_settings.yml:/usr/src/app/config/dynamic_settings.yml:ro
+    - ./deploy/config/file_store.yml:/usr/src/app/config/file_store.yml:ro
+    - ./deploy/config/delayed_jobs.yml:/usr/src/app/config/delayed_jobs.yml:ro
+    - ./deploy/config/environments/production-local.rb:/usr/src/app/config/environments/production-local.rb:ro
   depends_on:
     postgres:
       condition: service_healthy

@@ -1,0 +1,12 @@
+production:
+  delivery_method: "test"
+  domain: <%= ENV.fetch("CANVAS_HOST", "185.252.233.171") %>
+  outgoing_address: canvas@<%= ENV.fetch("CANVAS_HOST", "185.252.233.171") %>
+  default_name: Canvas
+
+development:
+  address: mailcatcher
+  port: 1025
+  domain: canvas.docker
+  outgoing_address: canvas@canvas.docker
+  default_name: Instructure Canvas

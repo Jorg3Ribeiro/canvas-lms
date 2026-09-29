@@ -1,0 +1,5 @@
+production:
+  cache_store: redis_cache_store
+
+development:
+  cache_store: redis_cache_store

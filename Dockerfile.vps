@@ -71,6 +71,8 @@ RUN corepack enable && corepack prepare yarn@1.19.1 --activate
 USER docker
 
 COPY --chown=docker:docker . /usr/src/app
+# config/*.yml is gitignored — bake tracked deploy/config into the image
+COPY --chown=docker:docker deploy/config/ /usr/src/app/config/
 RUN mkdir -p tmp/files log
 ENV COMPILE_ASSETS_BRAND_CONFIGS=0
 ENV COMPILE_ASSETS_NPM_INSTALL=0

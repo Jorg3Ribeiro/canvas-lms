@@ -16,9 +16,8 @@ Production **does not mount source**. The app is baked into `Dockerfile.vps`.
 |------|------|
 | `docker-compose.production.yml` | web, jobs, postgres, redis |
 | `Dockerfile.vps` | production image (bundle + assets) |
+| `deploy/config/*` | tracked YAML (because `/config/*.yml` is gitignored) |
 | `.env.production` | secrets (gitignored) |
-| `config/domain.yml` | host `185.252.233.171`, `ssl: false` |
-| `config/environments/production-local.rb` | HTTP without force_ssl |
 
 ## On the VPS
 
